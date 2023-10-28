@@ -35,8 +35,8 @@ class Qtrainer:
         self.gamma = gamma
         self.model = model
         self.optimizer = optim.AdamW(model.parameters(), lr = self.lr) # amsgrad = True
-        # self.criterion = nn.MSELoss()
-        self.criterion = nn.SmoothL1Loss()
+        self.criterion = nn.MSELoss()
+        # self.criterion = nn.SmoothL1Loss()
 
     def train_step(self, state, action, reward, next_state, done):
         self.model.train()

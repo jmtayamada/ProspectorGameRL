@@ -162,20 +162,20 @@ class Game:
 
         if mousePressed and len(self.prospectors) > 0:
             x, y, = mousePosition
-            dx = x - self.prospectors[0].treasure.x
-            dy = y - self.prospectors[0].treasure.y
-            dis = math.sqrt(dx*dx + dy*dy)
+            # dx = x - self.prospectors[0].treasure.x
+            # dy = y - self.prospectors[0].treasure.y
+            # dis = math.sqrt(dx*dx + dy*dy)
             # reward = 100/((dis*dis) + 1)
-            reward = 5 * (5-dis)
-            if dis == 0:
-                reward = 0
+            # reward = 5 * (5-dis)
+            # if reward < 0:
+            #     reward = 0
             # dis = float(self.calculateDistance(x, y))
             # reward = 50/((dis*dis)+1)
             
         # if self.state == "loss":
         #     reward = -100.0
-        # if self.state == "win":
-        #     reward = 200.0
+        if self.state == "win":
+            reward = 200
         # if reward != 0:
         #     print(reward)
 

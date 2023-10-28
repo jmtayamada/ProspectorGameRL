@@ -14,7 +14,7 @@ clock = pygame.time.Clock()
 
 MAX_MEMORY = 100_000
 BATCH_SIZE = 500
-LR = 0.1
+LR = 0.001
 
 max_framerate = 120
 
@@ -30,16 +30,20 @@ class Agent():
         self.ProspectorPos = []
         self.model = Linear_QNet(5, 256, 400).eval()
         # self.model.load_state_dict(torch.load("model/model.pth"))
-        # self.model.eval()
+        self.model.eval()
         self.trainer = Qtrainer(self.model, lr = LR, gamma = self.gamma)
 
-    def getState(self, game:Game):
-        self.ProspectorPos.append(20 * game.prospectors[0].y + game.prospectors[0].x)
-        while len(self.ProspectorPos) < 5:
-            self.ProspectorPos.append(self.ProspectorPos[0])
+    def getState(self, game:Game, update1:bool):
+        if update1:
+            self.ProspectorPos.append(20 * game.prospectors[0].y + game.prospectors[0].x)
+            while len(self.ProspectorPos) < 5:
+                self.ProspectorPos.append(self.ProspectorPos[0])
 
-        if len(self.ProspectorPos) > 5:
-            self.ProspectorPos.remove(self.ProspectorPos[0])
+            if len(self.ProspectorPos) > 5:
+                self.ProspectorPos.remove(self.ProspectorPos[0])
+
+
+        # state1 = [0] * 2000
 
         state = [self.ProspectorPos[0],
                 self.ProspectorPos[1],
@@ -47,7 +51,11 @@ class Agent():
                 self.ProspectorPos[3],
                 self.ProspectorPos[4]]
         
-        state = [190, 190, 190, 190, 190]
+        # state1[state[0]] = 1
+        # state1[state[1]+399] = 1
+        # state1[state[2]+799] = 1
+        # state1[state[3]+1199] = 1
+        # state1[state[4]+1599] = 1
 
         return np.array(state, dtype=int)
 
@@ -77,7 +85,7 @@ class Agent():
 
     def getAction(self, state):
         # random moves
-        epsilon = (self.epsilon * (self.epsilonDecay ** self.n_game)) + self.minEpsilon
+        epsilon = (self.epsilon * (self.epsilonDecay ** (self.n_game))) + self.minEpsilon
         final_move = (0, 0)
         if random.randint(0, 100) < epsilon:
             final_move = (random.randint(0, 19), random.randint(0, 19))
@@ -100,7 +108,7 @@ def train():
     plot_scores = []
     plot_mean_scores = []
     total_score = 0
-    print("starting starting starting starting starting starting starting starting starting starting")
+    state_new = agent.getState(game, True)
     while running:
         for event in pygame.event.get(): 
             if event.type == pygame.QUIT: 
@@ -112,13 +120,13 @@ def train():
                     elif framerate == 5:
                         framerate = max_framerate
         # get old state
-        state_old = agent.getState(game)
+        state_old = agent.getState(game, False)
         # get move
         final_move = agent.getAction(state_old)
         # perform move and get new state
         reward, done, won = game.interface(True, final_move)
         reward = reward
-        state_new = agent.getState(game)
+        state_new = agent.getState(game, True)
 
         # transform coords of moves into a number
         final_move = agent.CoordToNum(final_move)
@@ -144,16 +152,17 @@ def train():
 
             agent.ProspectorPos.clear()
 
-            # randomness = (agent.epsilon * (agent.epsilonDecay ** agent.n_game)) + agent.minEpsilon
+            randomness = (agent.epsilon * (agent.epsilonDecay ** (agent.n_game))) + agent.minEpsilon
 
             plot_scores.append(totalReward)
             total_score += totalReward
             mean_score = total_score / agent.n_game
             plot_mean_scores.append(mean_score)
-            plot(plot_scores, plot_mean_scores)
+            plot(plot_scores, plot_mean_scores, randomness)
 
             # print("Game", agent.n_game, "Status:", won, totalReward, "Randomness", randomness)
             totalReward = 0
+            state_new = agent.getState(game, True)
 
         pygame.display.flip()
         clock.tick(framerate)
